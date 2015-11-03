@@ -5,7 +5,6 @@ import json
 import logging
 import os
 from xml.dom import minidom
-
 import requests
 
 logging.basicConfig(level=logging.INFO,
@@ -23,8 +22,42 @@ def get_git_revision_hash():
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip()
 
 
+def get_git_directory():
+    import subprocess
+
+    return subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).strip()
+
+
+def file_exists(rootdir, filename):
+    for root, subFolders, files in os.walk(rootdir):
+        if filename in files:
+            return True
+        else:
+            for subFolder in subFolders:
+                return file_exists(subFolder, filename)
+            return False
+
+
+def generate_filename(sources, filename):
+    def strip_prefix(line, prefix):
+        if line.startswith(prefix):
+            return line[len(prefix):]
+        else:
+            return line
+
+    git_directory = get_git_directory()
+
+    for source in sources:
+        if file_exists(source, filename):
+            return strip_prefix(source, git_directory).strip("/") + "/" + filename.strip("/")
+
+    return filename
+
+
 def parse_report_file(report_file):
-    """Parse XML file and POST it to the Codacy API"""
+    """Parse XML file and POST it to the Codacy API
+    :param report_file:
+    """
 
     # Convert decimal string to floored int percent value
     def percent(s):
@@ -39,10 +72,11 @@ def parse_report_file(report_file):
         'fileReports': [],
     }
 
+    sources = map(lambda x: x.firstChild.nodeValue, report_xml.getElementsByTagName('source'))
     classes = report_xml.getElementsByTagName('class')
     for cls in classes:
         file_report = {
-            'filename': cls.attributes['filename'].value,
+            'filename': generate_filename(sources, cls.attributes['filename'].value),
             'total': percent(cls.attributes['line-rate'].value),
             'coverage': {},
         }
