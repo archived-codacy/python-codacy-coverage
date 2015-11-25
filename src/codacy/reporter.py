@@ -6,6 +6,7 @@ import logging
 import os
 from xml.dom import minidom
 import requests
+import six
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -107,7 +108,10 @@ def upload_report(report, token, commit):
     logging.debug(r.content)
     r.raise_for_status()
 
-    message = json.loads(r.content)['success']
+    if six.PY2:
+        message = json.loads(r.content)['success']
+    else:
+        message = json.loads(str(r.content, 'utf-8'))['success']
     logging.info(message)
 
 
