@@ -43,7 +43,7 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'}, include_package_data=True,
 
-    install_requires=['requests'],
+    install_requires=['requests', 'six'],
 
     extras_require={
         'dev': ['check-manifest'],
