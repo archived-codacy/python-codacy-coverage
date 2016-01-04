@@ -41,6 +41,8 @@ Then set it in your terminal, replacing %Project_Token% with your own token:
 
 ``export CODACY_PROJECT_TOKEN=%Project_Token%``
 
+Note: You should keep your API token well **protected**, as it grants owner permissions to your projects.
+
 Next, simply run the Codacy reporter. It will find the current commit and send all details to your project dashboard:
 
 ``python-codacy-coverage -r coverage.xml``
