@@ -1,12 +1,15 @@
 """Codacy coverage reporter for Python"""
 
 import argparse
+import contextlib
 import json
 import logging
 import os
 from xml.dom import minidom
-import requests
 from math import floor
+
+import requests
+from requests.packages.urllib3 import util as urllib3_util
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -15,6 +18,22 @@ CODACY_PROJECT_TOKEN = os.getenv('CODACY_PROJECT_TOKEN')
 CODACY_BASE_API_URL = os.getenv('CODACY_API_BASE_URL', 'https://api.codacy.com')
 URL = CODACY_BASE_API_URL + '/2.0/coverage/{commit}/python'
 DEFAULT_REPORT_FILE = 'coverage.xml'
+MAX_RETRIES = 3
+BAD_REQUEST = 400
+
+class _Retry(urllib3_util.Retry):
+
+    def is_forced_retry(self, method, status_code):
+        return status_code >= BAD_REQUEST
+
+
+@contextlib.contextmanager
+def _request_session():
+    retry = _Retry(total=MAX_RETRIES, raise_on_redirect=False)
+    session = requests.Session()
+    session.mount("https://", requests.adapters.HTTPAdapter(max_retries=retry))
+    with session:
+        yield session
 
 
 def get_git_revision_hash():
@@ -103,12 +122,14 @@ def upload_report(report, token, commit):
 
     logging.debug(data)
 
-    r = requests.post(url, data=data, headers=headers, allow_redirects=True)
+    with _request_session() as session:
+        r = session.post(url, data=data, headers=headers, allow_redirects=True)
 
     logging.debug(r.content)
     r.raise_for_status()
 
     response = json.loads(r.text)
+
     try:
         logging.info(response['success'])
     except KeyError:
