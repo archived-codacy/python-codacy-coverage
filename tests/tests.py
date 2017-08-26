@@ -1,6 +1,7 @@
 import json
 import os
 import unittest
+import mock
 
 import codacy.reporter
 
@@ -67,6 +68,29 @@ class ReporterTests(unittest.TestCase):
 
         self.compare_parse_result(result, _file_location('coverage-merge', 'coverage-merge.json'))
 
+    def test_git_directory_env(self):
+        os.environ["GIT_DIRECTORY"] = '/tmp'
+        test = codacy.reporter.get_git_directory()
+        self.assertEqual(test, '/tmp')
+        del os.environ["GIT_DIRECTORY"]
+
+    def test_git_directory_subproc(self):
+        with mock.patch("subprocess.check_output") as mock_subproc:
+            mock_subproc.return_value = 'abc123'
+            test = codacy.reporter.get_git_directory()
+        self.assertEqual(test, 'abc123')
+
+    def test_git_revision_hash_env(self):
+        os.environ["GIT_REVISION_HASH"] = 'abc123456'
+        test = codacy.reporter.get_git_revision_hash()
+        self.assertEqual(test, 'abc123456')
+        del os.environ["GIT_REVISION_HASH"]
+
+    def test_git_revision_hash_subproc(self):
+        with mock.patch("subprocess.check_output") as mock_subproc:
+            mock_subproc.return_value = 'abc123'
+            test = codacy.reporter.get_git_revision_hash()
+        self.assertEqual(test, 'abc123')
 
 if __name__ == '__main__':
     unittest.main()

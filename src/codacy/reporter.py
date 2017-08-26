@@ -36,25 +36,21 @@ def _request_session():
 
 
 def get_git_revision_hash():
-    import subprocess
+    """Get the git revision hash if it is not set by an env variable: GIT_REVISION_HASH"""
+    if os.getenv("GIT_REVISION_HASH"):
+        return os.getenv("GIT_REVISION_HASH")
 
+    import subprocess
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode("utf-8").strip()
 
 
 def get_git_directory():
+    """Get the git repo path if it is not set by an env variable: GIT_DIRECTORY"""
+    if os.getenv("GIT_DIRECTORY"):
+        return os.getenv("GIT_DIRECTORY")
+
     import subprocess
-
     return subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).decode("utf-8").strip()
-
-
-def file_exists(rootdir, filename):
-    for root, subFolders, files in os.walk(rootdir):
-        if filename in files:
-            return True
-        else:
-            for subFolder in subFolders:
-                return file_exists(os.path.join(rootdir, subFolder), filename)
-            return False
 
 
 def generate_filename(sources, filename, git_directory):
@@ -68,7 +64,7 @@ def generate_filename(sources, filename, git_directory):
         git_directory = get_git_directory()
 
     for source in sources:
-        if file_exists(source, filename):
+        if os.path.exists(os.path.join(source, filename)):
             return strip_prefix(source, git_directory).strip("/") + "/" + filename.strip("/")
 
     return filename
