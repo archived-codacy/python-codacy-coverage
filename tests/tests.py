@@ -69,24 +69,28 @@ class ReporterTests(unittest.TestCase):
         self.compare_parse_result(result, _file_location('coverage-merge', 'coverage-merge.json'))
 
     def test_git_directory_env(self):
+        """Test that using an environment variable works correctly for git directory"""
         os.environ["GIT_DIRECTORY"] = '/tmp'
         test = codacy.reporter.get_git_directory()
         self.assertEqual(test, '/tmp')
         del os.environ["GIT_DIRECTORY"]
 
     def test_git_directory_subproc(self):
+        """Test that using subprocess works correctly for git directory"""
         with mock.patch("subprocess.check_output") as mock_subproc:
             mock_subproc.return_value = 'abc123'
             test = codacy.reporter.get_git_directory()
         self.assertEqual(test, 'abc123')
 
     def test_git_revision_hash_env(self):
+        """Test that using an environment variable works for git revision hash"""
         os.environ["GIT_REVISION_HASH"] = 'abc123456'
         test = codacy.reporter.get_git_revision_hash()
         self.assertEqual(test, 'abc123456')
         del os.environ["GIT_REVISION_HASH"]
 
     def test_git_revision_hash_subproc(self):
+        """Test that using subprocess works correctly for git revision hash"""
         with mock.patch("subprocess.check_output") as mock_subproc:
             mock_subproc.return_value = 'abc123'
             test = codacy.reporter.get_git_revision_hash()
