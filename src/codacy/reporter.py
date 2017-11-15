@@ -47,13 +47,7 @@ def get_git_directory():
 
 
 def file_exists(rootdir, filename):
-    for root, subFolders, files in os.walk(rootdir):
-        if filename in files:
-            return True
-        else:
-            for subFolder in subFolders:
-                return file_exists(os.path.join(rootdir, subFolder), filename)
-            return False
+    return os.path.exists(os.path.join(rootdir, filename))
 
 
 def generate_filename(sources, filename, git_directory):
