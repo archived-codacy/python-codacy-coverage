@@ -1,10 +1,18 @@
 import json
 import os
 import unittest
+import sys
 
 import codacy.reporter
 
 HERE = os.path.abspath(os.path.dirname(__file__))
+
+print("PYTHON_VERSION: ", sys.version_info)
+
+if sys.version_info[0] == 3:
+    unicode_type = str
+else:
+    unicode_type = unicode
 
 
 def _file_location(*args):
@@ -22,7 +30,7 @@ class ReporterTests(unittest.TestCase):
                 result = {}
                 for key, value in d.items():
                     result[to_utf8(key)] = to_utf8(value)
-            elif type(d) is unicode:
+            elif type(d) is unicode_type:
                 return d.encode('utf8')
             else:
                 return d
