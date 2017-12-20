@@ -13,7 +13,6 @@ from requests.packages.urllib3 import util as urllib3_util
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-CODACY_PROJECT_TOKEN = os.getenv('CODACY_PROJECT_TOKEN')
 CODACY_BASE_API_URL = os.getenv('CODACY_API_BASE_URL', 'https://api.codacy.com')
 URL = CODACY_BASE_API_URL + '/2.0/coverage/{commit}/python'
 DEFAULT_REPORT_FILE = 'coverage.xml'
@@ -137,9 +136,7 @@ def parse_report_file(report_file, git_directory):
         }
         for line in lines:
             hits = int(line.attributes['hits'].value)
-            if hits >= 1:
-                # The API assumes 0 if a line is missing
-                file_report['coverage'][line.attributes['number'].value] = hits
+            file_report['coverage'][line.attributes['number'].value] = hits
         report['fileReports'] += [file_report]
 
     report['codeLines'] = total_lines
@@ -178,6 +175,7 @@ def run():
                         default=[], type=str,
                         action='append')
     parser.add_argument("-c", "--commit", type=str, help="git commit hash")
+    parser.add_argument("-t", "--token", type=str, help="Codacy project token")
     parser.add_argument("-d", "--directory", type=str, help="git top level directory")
     parser.add_argument("-v", "--verbose", help="show debug information", action="store_true")
 
@@ -186,9 +184,13 @@ def run():
     if args.verbose:
         logging.Logger.setLevel(logging.getLogger(), logging.DEBUG)
 
-    if not CODACY_PROJECT_TOKEN:
-        logging.error("environment variable CODACY_PROJECT_TOKEN is not defined.")
-        exit(1)
+    if args.token:
+        codacy_project_token = args.token
+    else:
+        codacy_project_token = os.getenv('CODACY_PROJECT_TOKEN')
+        if not codacy_project_token:
+            logging.error("environment variable CODACY_PROJECT_TOKEN is not defined.")
+            exit(1)
 
     if not args.commit:
         args.commit = get_git_revision_hash()
@@ -210,4 +212,4 @@ def run():
     report = merge_and_round_reports(reports)
 
     logging.info("Uploading report...")
-    upload_report(report, CODACY_PROJECT_TOKEN, args.commit)
+    upload_report(report, codacy_project_token, args.commit)

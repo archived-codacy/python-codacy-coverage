@@ -1,0 +1,24 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/circleci-working-dir
+    docker:
+      - image: circleci/python:2.7.13
+      # - image: circleci/python:3.6.2
+    steps:
+      - checkout
+      - run:
+          command: |
+            sudo python -m pip install --upgrade pip setuptools wheel
+            sudo python -m pip install --upgrade pep8 pyflakes coverage tox
+            sudo python -m pip install --upgrade virtualenv==12.0.2
+      - run:
+          command: |
+            tox -e py27,py350,pep8,pyflakes,coverage
+            sudo python setup.py develop
+      - deploy:
+          name: Push coverage
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              tox -e upload_coverage
+            fi

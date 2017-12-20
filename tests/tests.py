@@ -18,10 +18,20 @@ class ReporterTests(unittest.TestCase):
             with open(filename) as f:
                 return f.read()
 
+        def to_utf8(d):
+            if type(d) is dict:
+                result = {}
+                for key, value in d.items():
+                    result[to_utf8(key)] = to_utf8(value)
+            elif type(d) is unicode:
+                return d.encode('utf8')
+            else:
+                return d
+
         json_content = file_get_contents(expected_filename)
         expected = json.loads(json_content)
 
-        self.assertEqual(generated, expected)
+        self.assertEqual(to_utf8(generated), to_utf8(expected))
 
     def test_parser_coverage3(self):
         self.maxDiff = None
